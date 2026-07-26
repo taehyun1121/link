@@ -9,7 +9,7 @@ PROD = os.path.join(LH, 'products.json')
 
 TITLE = "요즘 난리난 아이템 모음 🛒"
 SUBTITLE = "쇼츠에서 본 그 제품, 여기서 최저가로 만나요!"
-CHANNEL = "하태현유튜브"
+CHANNEL = "ThhaTube"
 GREETING = "알뜰하게 쇼핑하고 행복하세요! 😘"
 
 def load():
