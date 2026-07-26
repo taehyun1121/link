@@ -8,17 +8,18 @@ LH = os.path.dirname(os.path.abspath(__file__))
 PROD = os.path.join(LH, 'products.json')
 
 TITLE = "요즘 난리난 아이템 모음 🛒"
-SUBTITLE = "쇼츠에서 본 그 제품, 여기서 최저가 확인하세요"
+SUBTITLE = "쇼츠에서 본 그 제품, 여기서 최저가로 만나요!"
 CHANNEL = "하태현유튜브"
+GREETING = "알뜰하게 쇼핑하고 행복하세요! 😘"
 
 def load():
     try: return json.load(open(PROD, encoding='utf-8'))
     except Exception: return []
 
-def add_product(label, name, url, thumbnail, date):
-    """파이프라인에서 호출: 새 상품을 맨 앞에 추가(중복 url 제거)."""
+def add_product(label, name, url, thumbnail, date, price=''):
+    """파이프라인에서 호출: 새 상품을 맨 앞에 추가(중복 url 제거). price 옵션."""
     ps = [p for p in load() if p.get('url') != url]
-    ps.insert(0, {'label': label, 'name': name, 'url': url, 'thumbnail': thumbnail, 'date': date})
+    ps.insert(0, {'label': label, 'name': name, 'url': url, 'thumbnail': thumbnail, 'date': date, 'price': price})
     json.dump(ps, open(PROD, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
     return len(ps)
 
@@ -28,17 +29,19 @@ def build():
     ps = load()
     # 최신 date 우선, 같은 날은 입력순 유지
     ps = sorted(ps, key=lambda p: p.get('date',''), reverse=True)
-    cards = []
+    rows = []
     for p in ps:
         thumb = esc(p.get('thumbnail',''))
         img = f'<div class="thumb" style="background-image:url(\'{thumb}\')"></div>' if thumb else '<div class="thumb noimg">🛒</div>'
-        cards.append(f'''<a class="card" href="{esc(p['url'])}" target="_blank" rel="nofollow noopener">
+        price = esc(p.get('price',''))
+        pr = f'<div class="price">{price}</div>' if price else ''
+        title = esc(p.get('label','')) or esc(p.get('name',''))
+        rows.append(f'''<a class="row" href="{esc(p['url'])}" target="_blank" rel="nofollow noopener">
   {img}
-  <div class="meta"><div class="label">{esc(p['label'])}</div>
-  <div class="name">{esc(p.get('name',''))}</div>
-  <div class="cta">쿠팡 최저가 보기 →</div></div>
+  <div class="meta"><div class="pname">{title}</div>{pr}</div>
+  <div class="go">›</div>
 </a>''')
-    cards_html = "\n".join(cards) if cards else '<p class="empty">곧 상품이 올라옵니다 🙌</p>'
+    rows_html = "\n".join(rows) if rows else '<p class="empty">곧 상품이 올라옵니다 🙌</p>'
     out = f'''<!doctype html>
 <html lang="ko"><head>
 <meta charset="utf-8">
@@ -49,33 +52,31 @@ def build():
 <meta property="og:description" content="{esc(SUBTITLE)}">
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-:root{{--bg:#0e0f13;--card:#181a20;--card2:#20232c;--fg:#f4f5f7;--sub:#9aa0ad;--acc:#ff5a1f;--acc2:#ffd60a}}
-body{{background:radial-gradient(120% 90% at 50% 0%,#1c1f2b 0%,var(--bg) 55%);color:var(--fg);
- font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;min-height:100vh;
- padding:32px 16px calc(48px + env(safe-area-inset-bottom));line-height:1.4}}
-.wrap{{max-width:520px;margin:0 auto}}
-header{{text-align:center;margin-bottom:26px}}
-.ava{{width:76px;height:76px;border-radius:50%;margin:0 auto 14px;
- background:conic-gradient(from 210deg,var(--acc),var(--acc2),var(--acc));
- display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 8px 30px rgba(255,90,31,.35)}}
-.chan{{font-size:13px;color:var(--sub);letter-spacing:.02em}}
-h1{{font-size:22px;font-weight:800;margin:4px 0 6px;letter-spacing:-.01em}}
-.sub{{font-size:13.5px;color:var(--sub)}}
-.cards{{display:flex;flex-direction:column;gap:12px;margin-top:8px}}
-.card{{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid #262a34;
- border-radius:18px;padding:12px;text-decoration:none;color:inherit;transition:transform .12s ease,border-color .12s ease,background .12s}}
-.card:active{{transform:scale(.98)}}
-.card:hover{{border-color:var(--acc);background:var(--card2)}}
-.thumb{{width:74px;height:74px;border-radius:13px;flex:0 0 74px;background-size:cover;background-position:center;background-color:#2a2e39}}
-.thumb.noimg{{display:flex;align-items:center;justify-content:center;font-size:30px}}
+:root{{--bg:#f6f7f9;--fg:#1a1c22;--sub:#8b909b;--acc:#ff5a1f;--line:#ececf1}}
+body{{background:var(--bg);color:var(--fg);font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
+ min-height:100vh;padding:26px 14px calc(40px + env(safe-area-inset-bottom));line-height:1.35}}
+.wrap{{max-width:480px;margin:0 auto}}
+header{{text-align:center;margin-bottom:18px}}
+.ava{{width:66px;height:66px;border-radius:50%;margin:0 auto 10px;
+ background:conic-gradient(from 210deg,var(--acc),#ffd60a,var(--acc));
+ display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 6px 20px rgba(255,90,31,.3)}}
+.chan{{font-size:12.5px;color:var(--sub);font-weight:600}}
+h1{{font-size:19px;font-weight:800;margin:3px 0 4px;letter-spacing:-.01em}}
+.sub{{font-size:12.5px;color:var(--sub)}}
+.greet{{text-align:center;font-size:13px;font-weight:700;color:var(--acc);margin:12px 0 14px}}
+.list{{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(20,22,30,.05)}}
+.row{{display:flex;align-items:center;gap:12px;padding:10px 12px;text-decoration:none;color:inherit;
+ border-bottom:1px solid var(--line);transition:background .1s}}
+.row:last-child{{border-bottom:none}}
+.row:active{{background:#f0f1f4}}
+.thumb{{width:54px;height:54px;border-radius:11px;flex:0 0 54px;background-size:cover;background-position:center;background-color:#eef0f3}}
+.thumb.noimg{{display:flex;align-items:center;justify-content:center;font-size:24px}}
 .meta{{min-width:0;flex:1}}
-.label{{font-size:15.5px;font-weight:750;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
-.name{{font-size:11.5px;color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px}}
-.cta{{display:inline-block;font-size:12.5px;font-weight:800;color:#111;background:linear-gradient(90deg,var(--acc2),var(--acc));
- padding:5px 12px;border-radius:999px}}
-.empty{{text-align:center;color:var(--sub);padding:40px 0}}
-footer{{margin-top:28px;text-align:center;font-size:11px;color:#6b7180;line-height:1.6}}
-footer a{{color:#8a90a0}}
+.pname{{font-size:14px;font-weight:650;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}}
+.price{{font-size:13px;font-weight:800;color:var(--acc);margin-top:2px}}
+.go{{font-size:22px;color:#c4c8d0;flex:0 0 auto;font-weight:400}}
+.empty{{text-align:center;color:var(--sub);padding:36px 0}}
+footer{{margin-top:20px;text-align:center;font-size:10.5px;color:#a7abb5;line-height:1.6}}
 </style></head>
 <body><div class="wrap">
 <header>
@@ -84,8 +85,9 @@ footer a{{color:#8a90a0}}
  <h1>{esc(TITLE)}</h1>
  <div class="sub">{esc(SUBTITLE)}</div>
 </header>
-<div class="cards">
-{cards_html}
+<div class="greet">{esc(GREETING)}</div>
+<div class="list">
+{rows_html}
 </div>
 <footer>
  이 페이지는 쿠팡 파트너스 활동의 일환으로,<br>이에 따른 일정액의 수수료를 제공받습니다.
